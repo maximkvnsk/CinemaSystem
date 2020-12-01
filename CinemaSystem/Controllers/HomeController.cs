@@ -7,7 +7,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using CinemaSystem.Models;
+using CinemaSystem.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace CinemaSystem.Controllers
 {
@@ -23,17 +25,29 @@ namespace CinemaSystem.Controllers
         [Authorize]
         public async Task<IActionResult> Index()
         {
-            return View(await db.Movies.ToListAsync());
+
+            return View(await db.Movies.Include(r => r.MovieRatingNavigation).ToListAsync());
         }
 
 
         public IActionResult Create()
         {
+            var vm = new RatingModel();
+            vm.MovieRatings = db.MovieRatings
+                                  .Select(a => new SelectListItem()
+                                  {
+                                      Value = a.RatingId.ToString(),
+                                      Text = a.RatingValue
+                                  })
+                                  .ToList();
+            ViewBag.vm = vm.MovieRatings;
             return View();
         }
+
         [HttpPost]
         public async Task<IActionResult> Create(Movie movie)
         {
+
             db.Movies.Add(movie);
             await db.SaveChangesAsync();
             return RedirectToAction("Index");
