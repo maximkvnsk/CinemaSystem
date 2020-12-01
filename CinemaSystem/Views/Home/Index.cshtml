@@ -1,0 +1,16 @@
+﻿@model IEnumerable<CinemaSystem.Models.Movie>
+@{
+    ViewBag.Title = "Все пользователи";
+}
+<a asp-action="Create">Добавить новый фильм</a>
+<table class="table">
+    <tr><td>Название</td><td>Режиссер</td><td>Актеры</td><td>Описание</td><td>Длительность</td><td>Возрастной рейтинг</td></tr>
+    @foreach (var item in Model)
+    {
+        <tr><td>@item.Title</td><td>@item.Director</td><td>@item.Cast</td><td>@item.Description</td><td>@item.Duration</td><td>@item.MovieRating</td>
+        <td>
+            <a asp-action="Edit" asp-controller="Home" asp-route-id="@item.MovieId">Изменить</a> |
+            <a asp-action="Delete" asp-controller="Home" asp-route-id="@item.MovieId">Удалить</a>
+        </td></tr>
+    }
+</table>
