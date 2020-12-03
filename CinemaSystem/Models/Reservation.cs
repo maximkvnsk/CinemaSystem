@@ -14,11 +14,15 @@ namespace CinemaSystem.Models
         public int ReservationId { get; set; }
         public int? ScreeningId { get; set; }
         public int? EmployeeId { get; set; }
+        
         public bool? Reserved { get; set; }
         public bool? Paid { get; set; }
         public bool Active { get; set; }
 
         public virtual Employee Employee { get; set; }
+
+        public int? SeatId { get; set; }
+        public virtual Seat Seat { get; set; }
         public virtual Screening Screening { get; set; }
     }
 }

@@ -22,15 +22,15 @@ namespace CinemaSystem.Controllers
             db = context;
         }
 
-        [Authorize]
+        [Authorize(Roles = "Director, Customer")]
         public async Task<IActionResult> Index()
         {
 
             return View(await db.Movies.Include(r => r.MovieRatingNavigation).ToListAsync());
         }
 
-
-        public IActionResult Create()
+        [Authorize(Roles = "Director")]
+        public async Task<IActionResult> Create()
         {
             var vm = new RatingModel();
             vm.MovieRatings = db.MovieRatings
@@ -41,10 +41,11 @@ namespace CinemaSystem.Controllers
                                   })
                                   .ToList();
             ViewBag.vm = vm.MovieRatings;
-            return View();
+            return  View();
         }
 
         [HttpPost]
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> Create(Movie movie)
         {
 
@@ -53,18 +54,30 @@ namespace CinemaSystem.Controllers
             return RedirectToAction("Index");
         }
 
-
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id != null)
             {
                 Movie movie = await db.Movies.FirstOrDefaultAsync(p => p.MovieId == id);
                 if (movie != null)
+                {
+                    var vm = new RatingModel();
+                    vm.MovieRatings = db.MovieRatings
+                                          .Select(a => new SelectListItem()
+                                          {
+                                              Value = a.RatingId.ToString(),
+                                              Text = a.RatingValue
+                                          })
+                                          .ToList();
+                    ViewBag.vm = vm.MovieRatings;
                     return View(movie);
+                }
             }
             return NotFound();
         }
         [HttpPost]
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> Edit(Movie movie)
         {
             db.Movies.Update(movie);
@@ -74,6 +87,7 @@ namespace CinemaSystem.Controllers
 
         [HttpGet]
         [ActionName("Delete")]
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> ConfirmDelete(int? id)
         {
             if (id != null)
@@ -86,6 +100,7 @@ namespace CinemaSystem.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id != null)

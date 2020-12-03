@@ -1,43 +1,21 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using CinemaSystem.ViewModels;
 using CinemaSystem.Models;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using CinemaSystem.ViewModels;
 
-namespace CinemaSystem.Controllers
+namespace RolesApp.Controllers
 {
     public class AccountController : Controller
     {
-        private CinemaDBContext db;
+        private CinemaDBContext _context;
         public AccountController(CinemaDBContext context)
         {
-            db = context;
-        }
-        [HttpGet]
-        public IActionResult Login()
-        {
-            return View();
-        }
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(LoginModel model)
-        {
-            if (ModelState.IsValid)
-            {
-                Employee user = await db.Employees.FirstOrDefaultAsync(u => u.Username == model.Username && u.Password == model.Password);
-                if (user != null)
-                {
-                    await Authenticate(model.Username); // аутентификация
-
-                    return RedirectToAction("Index", "Home");
-                }
-                ModelState.AddModelError("", "Некорректные логин и(или) пароль");
-            }
-            return View(model);
+            _context = context;
         }
         [HttpGet]
         public IActionResult Register()
@@ -50,14 +28,19 @@ namespace CinemaSystem.Controllers
         {
             if (ModelState.IsValid)
             {
-                Employee user = await db.Employees.FirstOrDefaultAsync(u => u.Username == model.Username);
+                Employee user = await _context.Employees.FirstOrDefaultAsync(u => u.Username == model.Username);
                 if (user == null)
                 {
                     // добавляем пользователя в бд
-                    db.Employees.Add(new Employee { Username = model.Username, Password = model.Password });
-                    await db.SaveChangesAsync();
+                    user = new Employee { Username = model.Username, Password = model.Password };
+                    Post userRole = await _context.Posts.FirstOrDefaultAsync(r => r.PostName == "Customer");
+                    if (userRole != null)
+                        user.Post = userRole;
 
-                    await Authenticate(model.Username); // аутентификация
+                    _context.Employees.Add(user);
+                    await _context.SaveChangesAsync();
+
+                    await Authenticate(user); // аутентификаци
 
                     return RedirectToAction("Index", "Home");
                 }
@@ -66,16 +49,41 @@ namespace CinemaSystem.Controllers
             }
             return View(model);
         }
+        [HttpGet]
+        public IActionResult Login()
+        {
+            return View();
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(LoginModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                Employee user = await _context.Employees
+                    .Include(u => u.Post)
+                    .FirstOrDefaultAsync(u => u.Username == model.Username && u.Password == model.Password);
+                if (user != null)
+                {
+                    await Authenticate(user); // аутентификация
 
-        private async Task Authenticate(string userName)
+                    return RedirectToAction("Index", "Home");
+                }
+                ModelState.AddModelError("", "Некорректные логин и(или) пароль");
+            }
+            return View(model);
+        }
+        private async Task Authenticate(Employee user)
         {
             // создаем один claim
             var claims = new List<Claim>
             {
-                new Claim(ClaimsIdentity.DefaultNameClaimType, userName)
+                new Claim(ClaimsIdentity.DefaultNameClaimType, user.Username),
+                new Claim(ClaimsIdentity.DefaultRoleClaimType, user.Post?.PostName)
             };
             // создаем объект ClaimsIdentity
-            ClaimsIdentity id = new ClaimsIdentity(claims, "ApplicationCookie", ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType);
+            ClaimsIdentity id = new ClaimsIdentity(claims, "ApplicationCookie", ClaimsIdentity.DefaultNameClaimType,
+                ClaimsIdentity.DefaultRoleClaimType);
             // установка аутентификационных куки
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(id));
         }

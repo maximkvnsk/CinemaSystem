@@ -1,0 +1,27 @@
+﻿@using CinemaSystem.ViewModels
+@model CinemaSystem.Models.Screening
+
+@{
+    ViewBag.Title = "Редактирование сеанса";
+}
+<form asp-action="edit" asp-controller="screening" asp-route-id="@Model.ScreeningId">
+    <div class="form-group">
+        <label asp-for="MovieId" class="control-label">Фильм</label>
+        <select asp-for="MovieId" asp-items="ViewBag.vm"></select>
+    </div>
+    <div class="form-group">
+        <label asp-for="AudithoriumId" class="control-label">Зал</label>
+        <select asp-for="AudithoriumId" asp-items="ViewBag.vm1"></select>
+    </div>
+    <div class="form-group">
+        <label asp-for="ScreeningStart" class="control-label">Начало</label>
+        <input type="text" asp-for="ScreeningStart" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label asp-for="Cost" class="control-label">Цена</label>
+        <input type="text" asp-for="Cost" class="form-control" />
+    </div>
+    <div class="form-group">
+        <input type="submit" value="Сохранить" class="btn btn-default" />
+    </div>
+</form>

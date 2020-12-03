@@ -1,0 +1,21 @@
+﻿@model IEnumerable<CinemaSystem.Models.Screening>
+@{
+    ViewBag.Title = "Все сеансы";
+}
+<a asp-action="Create">Добавить новый сеанс</a>
+<table class="table">
+    <tr><td>Фильм</td><td>Зал</td><td>Начало</td><td>Цена</td></tr>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>@item.Movie.Title</td>
+            <td>@item.Audithorium.Name</td>
+            <td>@item.ScreeningStart</td>
+            <td>@item.Cost</td>
+            <td>
+                <a asp-action="Edit" asp-controller="Screening" asp-route-id="@item.ScreeningId">Изменить</a> |
+                <a asp-action="Delete" asp-controller="Screening'" asp-route-id="@item.ScreeningId">Удалить</a>
+            </td>
+        </tr>
+    }
+</table>
